@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workers' Protests World Map (1960-2025)</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #212121;
+            --text-secondary: #424242;
+            --accent: #3f51b5;
+            --accent-hover: #303f9f;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --map-bg: #e3e3e3;
+            --connection-line: #3f51b5;
+            --bubble-color: #ff5252;
+            --bubble-hover: #ff1744;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #b0b0b0;
+            --accent: #5c6bc0;
+            --accent-hover: #3f51b5;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --map-bg: #1a1a1a;
+            --connection-line: #7986cb;
+            --bubble-color: #ff5252;
+            --bubble-hover: #ff1744;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            padding: 1rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            z-index: 1000;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px var(--shadow);
+            z-index: 999;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background-color: var(--map-bg);
+        }
+
+        .filter-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-title i {
+            color: var(--accent);
+        }
+
+        .year-range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .year-display {
+            font-weight: 600;
+            color: var(--accent);
+            min-width: 3rem;
+            text-align: center;
+        }
+
+        .year-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--bg-tertiary);
+            outline: none;
+            border-radius: 3px;
+        }
+
+        .year-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .year-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-chip {
+            padding: 0.4rem 0.8rem;
+            border-radius: 16px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-size: 0.9rem;
+        }
+
+        .filter-chip.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--accent);
+        }
+
+        .protest-info {
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .protest-info h3 {
+            margin-bottom: 0.75rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .protest-detail {
+            margin-bottom: 0.75rem;
+        }
+
+        .protest-detail-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .protest-detail-content {
+            font-size: 0.95rem;
+        }
+
+        .city-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .city-tag {
+            background-color: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .main-city {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow);
+            z-index: 1000;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--bg-primary);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .menu-toggle {
+                display: block;
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1002;
+                background: var(--bg-secondary);
+                border: none;
+                color: var(--text-primary);
+                padding: 0.5rem;
+                border-radius: 4px;
+                box-shadow: 0 2px 5px var(--shadow);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1><i class="fas fa-globe-americas"></i> Workers' Protests World Map (1960-2025)</h1>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <aside class="sidebar" id="sidebar">
+                <div class="filter-section">
+                    <div class="filter-title">
+                        <i class="fas fa-calendar-alt"></i> Year Range
+                    </div>
+                    <div class="year-range-container">
+                        <span class="year-display" id="startYear">1960</span>
+                        <input type="range" class="year-slider" id="startYearSlider" min="1960" max="2025" value="1960">
+                    </div>
+                    <div class="year-range-container">
+                        <span class="year-display" id="endYear">2025</span>
+                        <input type="range" class="year-slider" id="endYearSlider" min="1960" max="2025" value="2025">
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">
+                        <i class="fas fa-filter"></i> Protest Type
+                    </div>
+                    <div class="filter-options" id="protestTypeFilters">
+                        <div class="filter-chip active" data-type="all">All</div>
+                        <div class="filter-chip" data-type="strike">Strike</div>
+                        <div class="filter-chip" data-type="march">March</div>
+                        <div class="filter-chip" data-type="occupation">Occupation</div>
+                        <div class="filter-chip" data-type="boycott">Boycott</div>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">
+                        <i class="fas fa-globe"></i> Continent
+                    </div>
+                    <div class="filter-options" id="continentFilters">
+                        <div class="filter-chip active" data-continent="all">All</div>
+                        <div class="filter-chip" data-continent="americas">Americas</div>
+                        <div class="filter-chip" data-continent="europe">Europe</div>
+                        <div class="filter-chip" data-continent="asia">Asia</div>
+                        <div class="filter-chip" data-continent="africa">Africa</div>
+                    </div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalProtests">0</div>
+                        <div class="stat-label">Total Protests</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalWorkers">0</div>
+                        <div class="stat-label">Total Workers</div>
+                    </div>
+                </div>
+
+                <div class="protest-info" id="protestInfo">
+                    <div class="no-data-message">
+                        <i class="fas fa-info-circle"></i> Click on a protest bubble to see details
+                    </div>
+                </div>
+            </aside>
+
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="legend">
+                    <div class="legend-title">Protest Size</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.2);"></div>
+                        <span>Small (<1,000)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.5);"></div>
+                        <span>Medium (1,000-10,000)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.8);"></div>
+                        <span>Large (>10,000)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const startYearSlider = document.getElementById('startYearSlider');
+        const endYearSlider = document.getElementById('endYearSlider');
+        const startYearDisplay = document.getElementById('startYear');
+        const endYearDisplay = document.getElementById('endYear');
+        const protestTypeFilters = document.querySelectorAll('#protestTypeFilters .filter-chip');
+        const continentFilters = document.querySelectorAll('#continentFilters .filter-chip');
+        const protestInfo = document.getElementById('protestInfo');
+        const totalProtestsEl = document.getElementById('totalProtests');
+        const totalWorkersEl = document.getElementById('totalWorkers');
+
+        // State
+        let protestData = [];
+        let markers = [];
+        let activeProtestType = 'all';
+        let activeContinent = 'all';
+        let currentStartYear = 1960;
+        let currentEndYear = 2025;
+
+        // Initialize map
+        const map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.setAttribute(
+                'data-theme',
+                document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+            );
+            themeToggle.innerHTML = document.body.getAttribute('data-theme') === 'dark' 
+                ? '<i class="fas fa-sun"></i>' 
+                : '<i class="fas fa-moon"></i>';
+        });
+
+        // Mobile menu toggle
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        // Year slider sync
+        startYearSlider.addEventListener('input', () => {
+            const val = parseInt(startYearSlider.value);
+            if (val > currentEndYear) {
+                endYearSlider.value = val;
+                currentEndYear = val;
+                endYearDisplay.textContent = val;
+            }
+            currentStartYear = val;
+            startYearDisplay.textContent = val;
+            renderMap();
+        });
+
+        endYearSlider.addEventListener('input', () => {
+            const val = parseInt(endYearSlider.value);
+            if (val < currentStartYear) {
+                startYearSlider.value = val;
+                currentStartYear = val;
+                startYearDisplay.textContent = val;
+            }
+            currentEndYear = val;
+            endYearDisplay.textContent = val;
+            renderMap();
+        });
+
+        // Filter chips
+        protestTypeFilters.forEach(chip => {
+            chip.addEventListener('click', () => {
+                protestTypeFilters.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeProtestType = chip.dataset.type;
+                renderMap();
+            });
+        });
+
+        continentFilters.forEach(chip => {
+            chip.addEventListener('click', () => {
+                continentFilters.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeContinent = chip.dataset.continent;
+                renderMap();
+            });
+        });
+
+        // Fetch protest data
+        fetch('protests.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                protestData = data;
+                renderMap();
+            })
+            .catch(err => {
+                console.error('Failed to load protest data:', err);
+                protestInfo.innerHTML = '<div class="no-data-message"><i class="fas fa-exclamation-triangle"></i> Failed to load data. Ensure protests.json is in the same directory.</div>';
+            });
+
+        // Render map markers and stats
+        function renderMap() {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Filter data
+            const filtered = protestData.filter(event => {
+                const inYearRange = event.year >= currentStartYear && event.year <= currentEndYear;
+                const matchesType = activeProtestType === 'all' || event.type === activeProtestType;
+                const matchesContinent = activeContinent === 'all' || event.continent === activeContinent;
+                return inYearRange && matchesType && matchesContinent;
+            });
+
+            // Add markers
+            filtered.forEach(event => {
+                const coords = event.mainCity.coordinates;
+                const size = getBubbleSize(event.workersCount);
+                const marker = L.circleMarker([coords[0], coords[1]], {
+                    radius: size.radius,
+                    fillColor: '#ff5252',
+                    color: '#fff',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: size.opacity
+                }).addTo(map);
+
+                marker.on('click', () => showProtestInfo(event));
+                markers.push(marker);
+            });
+
+            // Update stats
+            const totalProtests = filtered.length;
+            const totalWorkers = filtered.reduce((sum, e) => sum + e.workersCount, 0);
+            totalProtestsEl.textContent = totalProtests;
+            totalWorkersEl.textContent = formatNumber(totalWorkers);
+        }
+
+        function getBubbleSize(workers) {
+            if (workers < 1000) return { radius: 8, opacity: 0.2 };
+            if (workers <= 10000) return { radius: 14, opacity: 0.5 };
+            return { radius: 22, opacity: 0.8 };
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function showProtestInfo(event) {
+            let citiesHtml = `<span class="city-tag main-city">${event.mainCity.name}</span>`;
+            event.additionalCities.forEach(city => {
+                citiesHtml += `<span class="city-tag">${city.name}</span>`;
+            });
+
+            protestInfo.innerHTML = `
+                <h3><i class="fas fa-exclamation-circle"></i> ${event.name} (${event.year})</h3>
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Type</div>
+                    <div class="protest-detail-content">${capitalize(event.type)}</div>
+                </div>
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Location</div>
+                    <div class="city-list">${citiesHtml}</div>
+                </div>
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Workers Involved</div>
+                    <div class="protest-detail-content">${formatNumber(event.workersCount)}</div>
+                </div>
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Reason</div>
+                    <div class="protest-detail-content">${event.reason}</div>
+                </div>
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Outcome</div>
+                    <div class="protest-detail-content">${event.outcome}</div>
+                </div>
+            `;
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    </script>
+</body>
+</html>

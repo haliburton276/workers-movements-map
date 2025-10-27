@@ -1,0 +1,275 @@
+[
+  {
+    "id": 1,
+    "name": "May 1968 Protests",
+    "year": 1968,
+    "type": "strike",
+    "continent": "europe",
+    "mainCity": {
+      "name": "Paris",
+      "coordinates": [48.8566, 2.3522]
+    },
+    "additionalCities": [
+      { "name": "Lyon", "coordinates": [45.7640, 4.8357] },
+      { "name": "Marseille", "coordinates": [43.2965, 5.3698] },
+      { "name": "Bordeaux", "coordinates": [44.8378, -0.5792] }
+    ],
+    "workersCount": 11000000,
+    "reason": "Student protests against capitalism, consumerism, American imperialism and traditional institutions",
+    "outcome": "General strike, economic paralysis, led to significant social reforms including wage increases and improved working conditions"
+  },
+  {
+    "id": 2,
+    "name": "Solidarity Movement",
+    "year": 1980,
+    "type": "strike",
+    "continent": "europe",
+    "mainCity": {
+      "name": "Gdańsk",
+      "coordinates": [54.3520, 18.6466]
+    },
+    "additionalCities": [
+      { "name": "Warsaw", "coordinates": [52.2297, 21.0122] },
+      { "name": "Kraków", "coordinates": [50.0647, 19.9450] }
+    ],
+    "workersCount": 10000000,
+    "reason": "Opposition to communist government, demanding workers' rights and independent trade unions",
+    "outcome": "Led to the Round Table Talks in 1989 and partially free elections, contributing to the collapse of communism in Poland"
+  },
+  {
+    "id": 3,
+    "name": "Poll Tax Riots",
+    "year": 1990,
+    "type": "march",
+    "continent": "europe",
+    "mainCity": {
+      "name": "London",
+      "coordinates": [51.5074, -0.1278]
+    },
+    "additionalCities": [
+      { "name": "Bristol", "coordinates": [51.4545, -2.5879] },
+      { "name": "Manchester", "coordinates": [53.4808, -2.2426] }
+    ],
+    "workersCount": 200000,
+    "reason": "Opposition to the Community Charge (Poll Tax) introduced by Margaret Thatcher's government",
+    "outcome": "The tax was eventually repealed and contributed to Thatcher's resignation"
+  },
+  {
+    "id": 4,
+    "name": "Seattle WTO Protests",
+    "year": 1999,
+    "type": "march",
+    "continent": "americas",
+    "mainCity": {
+      "name": "Seattle",
+      "coordinates": [47.6062, -122.3321]
+    },
+    "additionalCities": [
+      { "name": "Portland", "coordinates": [45.5152, -122.6784] },
+      { "name": "San Francisco", "coordinates": [37.7749, -122.4194] }
+    ],
+    "workersCount": 50000,
+    "reason": "Opposition to World Trade Organization policies and globalization",
+    "outcome": "WTO negotiations collapsed, raised global awareness about anti-globalization movement"
+  },
+  {
+    "id": 5,
+    "name": "Arab Spring - Egypt",
+    "year": 2011,
+    "type": "occupation",
+    "continent": "africa",
+    "mainCity": {
+      "name": "Cairo",
+      "coordinates": [30.0444, 31.2357]
+    },
+    "additionalCities": [
+      { "name": "Alexandria", "coordinates": [31.2001, 29.9187] },
+      { "name": "Suez", "coordinates": [29.9737, 32.5263] }
+    ],
+    "workersCount": 15000000,
+    "reason": "Political repression, poverty, unemployment, and corruption",
+    "outcome": "President Hosni Mubarak resigned after 18 days of protests"
+  },
+  {
+    "id": 6,
+    "name": "Occupy Wall Street",
+    "year": 2011,
+    "type": "occupation",
+    "continent": "americas",
+    "mainCity": {
+      "name": "New York",
+      "coordinates": [40.7128, -74.0060]
+    },
+    "additionalCities": [
+      { "name": "Los Angeles", "coordinates": [34.0522, -118.2437] },
+      { "name": "Chicago", "coordinates": [41.8781, -87.6298] },
+      { "name": "Boston", "coordinates": [42.3601, -71.0589] }
+    ],
+    "workersCount": 100000,
+    "reason": "Economic inequality, corporate influence on government, and financial sector corruption",
+    "outcome": "Raised awareness about wealth inequality, inspired similar movements worldwide"
+  },
+  {
+    "id": 7,
+    "name": "Indian Farmers' Protest",
+    "year": 2020,
+    "type": "march",
+    "continent": "asia",
+    "mainCity": {
+      "name": "New Delhi",
+      "coordinates": [28.6139, 77.2090]
+    },
+    "additionalCities": [
+      { "name": "Mumbai", "coordinates": [19.0760, 72.8777] },
+      { "name": "Kolkata", "coordinates": [22.5726, 88.3639] }
+    ],
+    "workersCount": 250000000,
+    "reason": "Opposition to three farm laws that would deregulate agricultural markets",
+    "outcome": "Government repealed the three controversial farm laws after a year of protests"
+  },
+  {
+    "id": 8,
+    "name": "South African Mine Workers Strike",
+    "year": 2014,
+    "type": "strike",
+    "continent": "africa",
+    "mainCity": {
+      "name": "Johannesburg",
+      "coordinates": [-26.2041, 28.0473]
+    },
+    "additionalCities": [
+      { "name": "Pretoria", "coordinates": [-25.7479, 28.2293] },
+      { "name": "Cape Town", "coordinates": [-33.9249, 18.4241] }
+    ],
+    "workersCount": 220000,
+    "reason": "Demand for higher wages and better working conditions in the platinum mining sector",
+    "outcome": "Reached a wage agreement after a five-month strike"
+  },
+  {
+    "id": 9,
+    "name": "French Pension Reform Protests",
+    "year": 2023,
+    "type": "strike",
+    "continent": "europe",
+    "mainCity": {
+      "name": "Paris",
+      "coordinates": [48.8566, 2.3522]
+    },
+    "additionalCities": [
+      { "name": "Lyon", "coordinates": [45.7640, 4.8357] },
+      { "name": "Marseille", "coordinates": [43.2965, 5.3698] },
+      { "name": "Toulouse", "coordinates": [43.6047, 1.4442] }
+    ],
+    "workersCount": 2000000,
+    "reason": "Opposition to pension reform raising retirement age from 62 to 64",
+    "outcome": "Despite massive protests, the pension reform was enacted using constitutional powers"
+  },
+  {
+    "id": 10,
+    "name": "UK Railway Strikes",
+    "year": 2022,
+    "type": "strike",
+    "continent": "europe",
+    "mainCity": {
+      "name": "London",
+      "coordinates": [51.5074, -0.1278]
+    },
+    "additionalCities": [
+      { "name": "Manchester", "coordinates": [53.4808, -2.2426] },
+      { "name": "Birmingham", "coordinates": [52.4862, -1.8904] }
+    ],
+    "workersCount": 50000,
+    "reason": "Disputes over pay, job security, and working conditions",
+    "outcome": "Ongoing negotiations with some wage increases offered"
+  },
+  {
+    "id": 11,
+    "name": "US Auto Workers Strike",
+    "year": 2023,
+    "type": "strike",
+    "continent": "americas",
+    "mainCity": {
+      "name": "Detroit",
+      "coordinates": [42.3314, -83.0458]
+    },
+    "additionalCities": [
+      { "name": "Chicago", "coordinates": [41.8781, -87.6298] },
+      { "name": "Kansas City", "coordinates": [39.0997, -94.5786] }
+    ],
+    "workersCount": 150000,
+    "reason": "Demand for higher wages, better benefits, and job security in transition to electric vehicles",
+    "outcome": "Reached tentative agreements with major automakers including significant wage increases"
+  },
+  {
+    "id": 12,
+    "name": "Chilean Winter Protests",
+    "year": 2006,
+    "type": "march",
+    "continent": "americas",
+    "mainCity": {
+      "name": "Santiago",
+      "coordinates": [-33.4489, -70.6693]
+    },
+    "additionalCities": [
+      { "name": "Valparaíso", "coordinates": [-33.0472, -71.6127] },
+      { "name": "Concepción", "coordinates": [-36.8269, -73.0498] }
+    ],
+    "workersCount": 800000,
+    "reason": "Student-led movement demanding educational reform and equity",
+    "outcome": "Government agreed to create a presidential advisory committee on education"
+  },
+  {
+    "id": 13,
+    "name": "Greek Anti-Austerity Protests",
+    "year": 2010,
+    "type": "occupation",
+    "continent": "europe",
+    "mainCity": {
+      "name": "Athens",
+      "coordinates": [37.9838, 23.7275]
+    },
+    "additionalCities": [
+      { "name": "Thessaloniki", "coordinates": [40.6401, 22.9444] },
+      { "name": "Patras", "coordinates": [38.2466, 21.7346] }
+    ],
+    "workersCount": 500000,
+    "reason": "Opposition to austerity measures imposed by EU/IMF bailout conditions",
+    "outcome": "Massive social unrest; austerity continued but sparked pan-European anti-austerity movements"
+  },
+  {
+    "id": 14,
+    "name": "Brazilian Truckers' Strike",
+    "year": 2018,
+    "type": "strike",
+    "continent": "americas",
+    "mainCity": {
+      "name": "Brasília",
+      "coordinates": [-15.7801, -47.9292]
+    },
+    "additionalCities": [
+      { "name": "São Paulo", "coordinates": [-23.5505, -46.6333] },
+      { "name": "Rio de Janeiro", "coordinates": [-22.9068, -43.1729] }
+    ],
+    "workersCount": 400000,
+    "reason": "Protest against rising diesel prices and poor road conditions",
+    "outcome": "Government temporarily reduced fuel prices and offered subsidies"
+  },
+  {
+    "id": 15,
+    "name": "Sudanese Revolution",
+    "year": 2019,
+    "type": "occupation",
+    "continent": "africa",
+    "mainCity": {
+      "name": "Khartoum",
+      "coordinates": [15.5007, 32.5599]
+    },
+    "additionalCities": [
+      { "name": "Omdurman", "coordinates": [15.6500, 32.4833] },
+      { "name": "Port Sudan", "coordinates": [19.6175, 37.2167] }
+    ],
+    "workersCount": 3000000,
+    "reason": "Economic hardship, inflation, and demand for democratic transition after 30 years of dictatorship",
+    "outcome": "Ousted President Omar al-Bashir; transitional government established"
+  }
+]
