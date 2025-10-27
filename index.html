@@ -7,8 +7,11 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     
-    <!-- Font Awesome for icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -23,8 +26,10 @@
             --shadow: rgba(0, 0, 0, 0.1);
             --map-bg: #e3e3e3;
             --connection-line: #3f51b5;
-            --bubble-color: #ff5252;
-            --bubble-hover: #ff1744;
+            --bubble-small: #4caf50;    /* Green */
+            --bubble-medium: #ffeb3b;   /* Yellow */
+            --bubble-large: #f44336;    /* Red */
+            --additional-city: #9e9e9e; /* Will be overridden */
         }
 
         [data-theme="dark"] {
@@ -38,8 +43,9 @@
             --shadow: rgba(0, 0, 0, 0.3);
             --map-bg: #1a1a1a;
             --connection-line: #7986cb;
-            --bubble-color: #ff5252;
-            --bubble-hover: #ff1744;
+            --bubble-small: #66bb6a;
+            --bubble-medium: #ffeb3b;
+            --bubble-large: #ef5350;
         }
 
         * {
@@ -54,6 +60,7 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             overflow: hidden;
+            height: 100vh;
         }
 
         .app-container {
@@ -83,7 +90,14 @@
             font-weight: 600;
         }
 
-        .theme-toggle {
+        .header-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .theme-toggle,
+        .info-btn,
+        .reset-btn {
             background: none;
             border: none;
             color: var(--text-primary);
@@ -94,9 +108,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 40px;
+            height: 40px;
         }
 
-        .theme-toggle:hover {
+        .theme-toggle:hover,
+        .info-btn:hover,
+        .reset-btn:hover {
             background-color: var(--bg-tertiary);
         }
 
@@ -104,6 +122,7 @@
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
 
         .sidebar {
@@ -113,6 +132,34 @@
             overflow-y: auto;
             box-shadow: 2px 0 10px var(--shadow);
             z-index: 999;
+            height: 100%;
+        }
+
+        .search-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 6px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        }
+
+        .search-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-style: italic;
         }
 
         .map-container {
@@ -261,6 +308,26 @@
             color: white;
         }
 
+        .sources-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 0.5rem;
+        }
+
+        .sources-list li {
+            margin-bottom: 0.3rem;
+        }
+
+        .sources-list a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .sources-list a:hover {
+            text-decoration: underline;
+        }
+
         .legend {
             position: absolute;
             bottom: 20px;
@@ -321,11 +388,121 @@
             color: var(--text-secondary);
         }
 
+        /* Loading Spinner */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Info Modal */
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow);
+            padding: 1.5rem;
+            z-index: 3000;
+            max-width: 400px;
+            width: 90%;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal h2 {
+            font-size: 1.3rem;
+            color: var(--accent);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .modal-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .modal-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .modal-link:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-link i {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
-                width: 100%;
                 position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                max-width: 320px;
                 transform: translateX(-100%);
+                transition: transform 0.3s ease;
                 z-index: 1001;
             }
 
@@ -345,6 +522,7 @@
                 padding: 0.5rem;
                 border-radius: 4px;
                 box-shadow: 0 2px 5px var(--shadow);
+                font-size: 1.2rem;
             }
         }
 
@@ -360,9 +538,17 @@
         <header>
             <div class="header-content">
                 <h1><i class="fas fa-globe-americas"></i> Workers' Protests World Map (1960-2025)</h1>
-                <button class="theme-toggle" id="themeToggle">
-                    <i class="fas fa-moon"></i>
-                </button>
+                <div class="header-buttons">
+                    <button class="reset-btn" id="resetFilters" title="Reset Filters">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="info-btn" id="infoBtn" title="About & Submit">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                    <button class="theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -372,6 +558,11 @@
             </button>
 
             <aside class="sidebar" id="sidebar">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search protests (e.g., sudanese year:2019)">
+                    <div class="search-hint">Try: "strike", "2023", "africa", or "year:2019 continent:africa"</div>
+                </div>
+
                 <div class="filter-section">
                     <div class="filter-title">
                         <i class="fas fa-calendar-alt"></i> Year Range
@@ -435,24 +626,55 @@
                 <div class="legend">
                     <div class="legend-title">Protest Size</div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.2);"></div>
-                        <span>Small (<1,000)</span>
+                        <div class="legend-color" style="background-color: var(--bubble-small);"></div>
+                        <span>Small (<10,000)</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.5);"></div>
-                        <span>Medium (1,000-10,000)</span>
+                        <div class="legend-color" style="background-color: var(--bubble-medium);"></div>
+                        <span>Medium (10,000–100,000)</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-color" style="background-color: rgba(255, 82, 82, 0.8);"></div>
-                        <span>Large (>10,000)</span>
+                        <div class="legend-color" style="background-color: var(--bubble-large);"></div>
+                        <span>Large (>100,000)</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Info Modal -->
+        <div class="modal" id="infoModal">
+            <div class="modal-header">
+                <h2>About This Project</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-links">
+                <a href="https://github.com/yourusername/workers-protests-map" target="_blank" class="modal-link">
+                    <i class="fab fa-github"></i>
+                    <span>View Source Code on GitHub</span>
+                </a>
+                <a href="https://forms.gle/your-submission-form-link" target="_blank" class="modal-link">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Suggest a Protest</span>
+                </a>
+                <a href="#" class="modal-link" onclick="document.getElementById('infoModal').classList.remove('open'); return false;">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>View Methodology</span>
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <!-- Leaflet Curve -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.curve@0.1.1/dist/leaflet.curve.min.js"></script>
 
     <script>
         // DOM Elements
@@ -468,42 +690,108 @@
         const protestInfo = document.getElementById('protestInfo');
         const totalProtestsEl = document.getElementById('totalProtests');
         const totalWorkersEl = document.getElementById('totalWorkers');
+        const resetBtn = document.getElementById('resetFilters');
+        const infoBtn = document.getElementById('infoBtn');
+        const closeModal = document.getElementById('closeModal');
+        const infoModal = document.getElementById('infoModal');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const searchInput = document.getElementById('searchInput');
 
         // State
         let protestData = [];
-        let markers = [];
+        let markerCluster = null;
+        let connectionLines = [];
+        let additionalCityMarkers = [];
         let activeProtestType = 'all';
         let activeContinent = 'all';
         let currentStartYear = 1960;
         let currentEndYear = 2025;
+        let map;
+        let leafletCurveLoaded = false;
+        let selectedMarker = null;
+
+        // Show loading
+        function showLoading() {
+            loadingOverlay.classList.add('active');
+        }
+
+        // Hide loading
+        function hideLoading() {
+            loadingOverlay.classList.remove('active');
+        }
 
         // Initialize map
-        const map = L.map('map').setView([20, 0], 2);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        function initMap() {
+            map = L.map('map').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
 
         // Theme toggle
         themeToggle.addEventListener('click', () => {
-            document.body.setAttribute(
-                'data-theme',
-                document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-            );
-            themeToggle.innerHTML = document.body.getAttribute('data-theme') === 'dark' 
-                ? '<i class="fas fa-sun"></i>' 
-                : '<i class="fas fa-moon"></i>';
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            themeToggle.innerHTML = isDark 
+                ? '<i class="fas fa-moon"></i>' 
+                : '<i class="fas fa-sun"></i>';
         });
 
-        // Mobile menu toggle
+        // Modal
+        infoBtn.addEventListener('click', () => {
+            infoModal.classList.add('open');
+        });
+
+        closeModal.addEventListener('click', () => {
+            infoModal.classList.remove('open');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.classList.remove('open');
+            }
+        });
+
+        // Mobile menu
         if (menuToggle) {
             menuToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('open');
             });
         }
 
-        // Year slider sync
+        function closeSidebarOnMobile() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        // Reset filters
+        resetBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            startYearSlider.value = '1960';
+            endYearSlider.value = '2025';
+            startYearDisplay.textContent = '1960';
+            endYearDisplay.textContent = '2025';
+            currentStartYear = 1960;
+            currentEndYear = 2025;
+
+            protestTypeFilters.forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.type === 'all');
+            });
+            activeProtestType = 'all';
+
+            continentFilters.forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.continent === 'all');
+            });
+            activeContinent = 'all';
+
+            renderMap();
+            closeSidebarOnMobile();
+        });
+
+        // Year sliders
         startYearSlider.addEventListener('input', () => {
-            const val = parseInt(startYearSlider.value);
+            let val = parseInt(startYearSlider.value);
             if (val > currentEndYear) {
                 endYearSlider.value = val;
                 currentEndYear = val;
@@ -512,10 +800,11 @@
             currentStartYear = val;
             startYearDisplay.textContent = val;
             renderMap();
+            closeSidebarOnMobile();
         });
 
         endYearSlider.addEventListener('input', () => {
-            const val = parseInt(endYearSlider.value);
+            let val = parseInt(endYearSlider.value);
             if (val < currentStartYear) {
                 startYearSlider.value = val;
                 currentStartYear = val;
@@ -524,6 +813,7 @@
             currentEndYear = val;
             endYearDisplay.textContent = val;
             renderMap();
+            closeSidebarOnMobile();
         });
 
         // Filter chips
@@ -533,6 +823,7 @@
                 chip.classList.add('active');
                 activeProtestType = chip.dataset.type;
                 renderMap();
+                closeSidebarOnMobile();
             });
         });
 
@@ -542,82 +833,255 @@
                 chip.classList.add('active');
                 activeContinent = chip.dataset.continent;
                 renderMap();
+                closeSidebarOnMobile();
             });
         });
 
-        // Fetch protest data
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+            renderMap();
+            closeSidebarOnMobile();
+        });
+
+        // Parse search query
+        function parseSearchQuery(query) {
+            if (!query.trim()) return null;
+            
+            const tokens = query.toLowerCase().split(/\s+/);
+            const result = {
+                keywords: [],
+                year: null,
+                continent: null,
+                type: null
+            };
+
+            tokens.forEach(token => {
+                if (token.startsWith('year:')) {
+                    const year = parseInt(token.split(':')[1]);
+                    if (!isNaN(year)) result.year = year;
+                } else if (token.startsWith('continent:')) {
+                    result.continent = token.split(':')[1];
+                } else if (token.startsWith('type:')) {
+                    result.type = token.split(':')[1];
+                } else {
+                    result.keywords.push(token);
+                }
+            });
+
+            return result;
+        }
+
+        // Load leaflet.curve dynamically with fallback
+        function loadLeafletCurve() {
+            return new Promise((resolve, reject) => {
+                if (typeof L.curve !== 'undefined') {
+                    leafletCurveLoaded = true;
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/leaflet.curve@0.1.1/dist/leaflet.curve.min.js';
+                script.onload = () => {
+                    leafletCurveLoaded = true;
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.warn('Failed to load leaflet.curve. Falling back to straight lines.');
+                    leafletCurveLoaded = false;
+                    resolve();
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Fetch data
+        showLoading();
         fetch('protests.json')
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+                if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
             })
             .then(data => {
                 protestData = data;
-                renderMap();
+                initMap();
+                loadLeafletCurve().then(() => {
+                    renderMap();
+                    hideLoading();
+                });
             })
             .catch(err => {
-                console.error('Failed to load protest data:', err);
+                console.error('Failed to load protest ', err);
+                hideLoading();
                 protestInfo.innerHTML = '<div class="no-data-message"><i class="fas fa-exclamation-triangle"></i> Failed to load data. Ensure protests.json is in the same directory.</div>';
             });
 
-        // Render map markers and stats
-        function renderMap() {
-            // Clear existing markers
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
+        // Get size and color based on workers count
+        function getProtestStyle(workers) {
+            if (workers < 10000) {
+                return { radius: 10, color: 'var(--bubble-small)', opacity: 0.8 };
+            } else if (workers <= 100000) {
+                return { radius: 14, color: 'var(--bubble-medium)', opacity: 0.8 };
+            } else {
+                return { radius: 18, color: 'var(--bubble-large)', opacity: 0.8 };
+            }
+        }
 
-            // Filter data
+        // Text search helper
+        function matchesText(event, keywords) {
+            if (keywords.length === 0) return true;
+            const text = `${event.name} ${event.reason} ${event.outcome} ${event.mainCity.name}`.toLowerCase();
+            return keywords.every(kw => text.includes(kw));
+        }
+
+        // Render map
+        function renderMap() {
+            if (markerCluster) {
+                map.removeLayer(markerCluster);
+            }
+            connectionLines.forEach(line => map.removeLayer(line));
+            additionalCityMarkers.forEach(marker => map.removeLayer(marker));
+            connectionLines = [];
+            additionalCityMarkers = [];
+            selectedMarker = null;
+
+            const searchQuery = parseSearchQuery(searchInput.value);
+
             const filtered = protestData.filter(event => {
-                const inYearRange = event.year >= currentStartYear && event.year <= currentEndYear;
+                if (searchQuery) {
+                    if (searchQuery.year !== null && event.year !== searchQuery.year) return false;
+                    if (searchQuery.continent && event.continent !== searchQuery.continent) return false;
+                    if (searchQuery.type && event.type !== searchQuery.type) return false;
+                    if (!matchesText(event, searchQuery.keywords)) return false;
+                }
+
+                const inYear = event.year >= currentStartYear && event.year <= currentEndYear;
                 const matchesType = activeProtestType === 'all' || event.type === activeProtestType;
                 const matchesContinent = activeContinent === 'all' || event.continent === activeContinent;
-                return inYearRange && matchesType && matchesContinent;
+                return inYear && matchesType && matchesContinent;
             });
 
-            // Add markers
+            markerCluster = L.markerClusterGroup({
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                maxClusterRadius: 40
+            });
+
             filtered.forEach(event => {
                 const coords = event.mainCity.coordinates;
-                const size = getBubbleSize(event.workersCount);
+                const style = getProtestStyle(event.workersCount);
                 const marker = L.circleMarker([coords[0], coords[1]], {
-                    radius: size.radius,
-                    fillColor: '#ff5252',
+                    radius: style.radius,
+                    fillColor: style.color,
                     color: '#fff',
                     weight: 1,
                     opacity: 1,
-                    fillOpacity: size.opacity
-                }).addTo(map);
+                    fillOpacity: style.opacity,
+                    event: event // Attach event data
+                });
 
-                marker.on('click', () => showProtestInfo(event));
-                markers.push(marker);
+                marker.on('click', () => {
+                    // Reset previous selection
+                    if (selectedMarker) {
+                        const prevStyle = getProtestStyle(selectedMarker.options.event.workersCount);
+                        selectedMarker.setStyle({
+                            fillColor: prevStyle.color,
+                            fillOpacity: prevStyle.opacity
+                        });
+                    }
+
+                    // Apply selected state
+                    marker.setStyle({
+                        fillColor: marker.options.fillColor,
+                        fillOpacity: 1.0,
+                        radius: marker.options.radius + 2
+                    });
+                    selectedMarker = marker;
+
+                    showProtestInfo(event);
+                    closeSidebarOnMobile();
+                });
+
+                markerCluster.addLayer(marker);
             });
 
-            // Update stats
+            map.addLayer(markerCluster);
+
             const totalProtests = filtered.length;
             const totalWorkers = filtered.reduce((sum, e) => sum + e.workersCount, 0);
             totalProtestsEl.textContent = totalProtests;
             totalWorkersEl.textContent = formatNumber(totalWorkers);
         }
 
-        function getBubbleSize(workers) {
-            if (workers < 1000) return { radius: 8, opacity: 0.2 };
-            if (workers <= 10000) return { radius: 14, opacity: 0.5 };
-            return { radius: 22, opacity: 0.8 };
-        }
-
-        function formatNumber(num) {
-            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
-            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-            return num.toString();
-        }
-
+        // Show protest info with connections and additional city markers
         function showProtestInfo(event) {
+            connectionLines.forEach(line => map.removeLayer(line));
+            additionalCityMarkers.forEach(marker => map.removeLayer(marker));
+            connectionLines = [];
+            additionalCityMarkers = [];
+
+            const main = event.mainCity.coordinates;
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const lineColor = isDark ? '#7986cb' : '#3f51b5';
+
+            // Get base color from main bubble
+            const baseStyle = getProtestStyle(event.workersCount);
+            const baseColor = getComputedStyle(document.documentElement).getPropertyValue(
+                baseStyle.color.replace('var(', '').replace(')', '')
+            ).trim();
+
+            event.additionalCities.forEach(city => {
+                const dest = city.coordinates;
+                // Use same color family as main bubble, but lighter
+                const additionalMarker = L.circleMarker([dest[0], dest[1]], {
+                    radius: 5,
+                    fillColor: baseColor,
+                    color: '#fff',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.5
+                }).addTo(map);
+                additionalCityMarkers.push(additionalMarker);
+
+                // Draw connection: solid when selected
+                if (leafletCurveLoaded) {
+                    const midLat = (main[0] + dest[0]) / 2;
+                    const midLng = (main[1] + dest[1]) / 2 + 5;
+                    const line = L.curve(
+                        ['M', ...main, 'Q', midLat, midLng, ...dest],
+                        {
+                            color: baseColor,
+                            dashArray: '0', // Solid line when selected
+                            weight: 2,
+                            opacity: 0.8
+                        }
+                    ).addTo(map);
+                    connectionLines.push(line);
+                } else {
+                    const line = L.polyline([main, dest], {
+                        color: baseColor,
+                        dashArray: '0',
+                        weight: 2,
+                        opacity: 0.8
+                    }).addTo(map);
+                    connectionLines.push(line);
+                }
+            });
+
             let citiesHtml = `<span class="city-tag main-city">${event.mainCity.name}</span>`;
             event.additionalCities.forEach(city => {
                 citiesHtml += `<span class="city-tag">${city.name}</span>`;
             });
+
+            let sourcesHtml = '';
+            if (event.sources && event.sources.length > 0) {
+                sourcesHtml = '<ul class="sources-list">';
+                event.sources.slice(0, 3).forEach(src => {
+                    sourcesHtml += `<li><a href="${src.url}" target="_blank" rel="noopener">${src.title}</a></li>`;
+                });
+                sourcesHtml += '</ul>';
+            }
 
             protestInfo.innerHTML = `
                 <h3><i class="fas fa-exclamation-circle"></i> ${event.name} (${event.year})</h3>
@@ -641,7 +1105,20 @@
                     <div class="protest-detail-title">Outcome</div>
                     <div class="protest-detail-content">${event.outcome}</div>
                 </div>
+                ${sourcesHtml ? `
+                <div class="protest-detail">
+                    <div class="protest-detail-title">Sources</div>
+                    ${sourcesHtml}
+                </div>` : ''}
             `;
+        }
+
+        // Helpers
+        function formatNumber(num) {
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toLocaleString();
         }
 
         function capitalize(str) {
